@@ -4,7 +4,9 @@
   "description": "Leaderboard for yakuza ups / downs / trues",
   "scripts": {
     "start": "node -r dotenv/config ./build/main.js",
-    "start-envless": "node ./build/main.js"
+    "start-envless": "node ./build/main.js",
+    "watch": "tsc --watch",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
