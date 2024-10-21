@@ -1,5 +1,5 @@
 import { Events, CommandInteraction } from "discord.js";
-import { CommandsClient } from "../commandsClient.js";
+import { CommandsClient } from "../misc/commandsClient.js";
 
 module.exports = {
   name: Events.InteractionCreate,
