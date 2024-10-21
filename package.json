@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node -r dotenv/config ./build/main.js",
     "start-envless": "node ./build/main.js",
+    "deploy": "node -r dotenv/config ./build/deploy.js",
     "watch": "tsc --watch",
     "build": "tsc"
   },
