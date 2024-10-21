@@ -1,5 +1,5 @@
 import { Collection, GatewayIntentBits } from "discord.js";
-import { CommandsClient } from "./misc/commandsClient.js";
+import { CommandsClient } from "./shared/commandsClient.js";
 import * as fs from "fs";
 import * as path from "path";
 
