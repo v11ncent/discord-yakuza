@@ -2,6 +2,7 @@ import * as mongoDB from "mongodb";
 import * as dotenv from "dotenv";
 
 export const collections: { users?: mongoDB.Collection } = {};
+
 export async function connectToDatabase() {
   dotenv.config();
   const connectionString = process.env["MONGO_DB_CONNECTION_STRING"];
