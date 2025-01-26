@@ -1,7 +1,11 @@
 // Fetches all messages & stores data in database
-import { SlashCommandBuilder, CommandInteraction } from "discord.js";
-import { Admins } from "../../shared/enums/admins";
-import { Servers } from "../../shared/enums/servers";
+import {
+  SlashCommandBuilder,
+  CommandInteraction,
+  TextChannel,
+  Message,
+} from "discord.js";
+import { isInteractionAllowed, isGuildTextChannel } from "../helpers/index";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -9,8 +13,11 @@ module.exports = {
     .setDescription("Fetches & stores message data in the database."),
 
   async execute(interaction: CommandInteraction) {
-    if (isAllowed(interaction, true)) {
-      await interaction.reply(interaction.guildId as string);
+    const channel = interaction.channel;
+
+    if (isInteractionAllowed(interaction) && isGuildTextChannel(channel)) {
+      const messages = await getAllMessages(channel);
+      await interaction.reply(messages.toString().substring(0, 100));
     } else {
       await interaction.reply({
         content: "You can't run this command unless you're an admin 🤭",
@@ -20,29 +27,24 @@ module.exports = {
   },
 };
 
-const isFromServer = (interaction: CommandInteraction): boolean => {
-  // https://discord.com/developers/docs/interactions
-  const GUILD_INTERACTION = 0;
+// https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
+const getAllMessages = async (
+  channel: TextChannel,
+  limit: number = 100,
+): Promise<Message[]> => {
+  const shipment: Message[] = [];
+  const manager = channel.messages;
+  let pivot = null;
 
-  return interaction.context === GUILD_INTERACTION;
-};
+  while (shipment.length < limit) {
+    const parts: any = await manager.fetch({
+      limit: limit < 100 ? limit : 100, // Max messages per call is 100
+      before: pivot?.id,
+    });
 
-const isAllowed = (
-  interaction: CommandInteraction,
-  onlyAdmins?: boolean,
-): boolean => {
-  if (!isFromServer(interaction)) {
-    return false;
+    pivot = parts.last(); // Move the pointer to the last message fetched
+    parts.forEach((part: any) => shipment.push(part));
   }
 
-  // Not sure why TS can't infer `guildId` type after the type guard
-  if (!Object.values(Servers).includes(interaction.guildId as string)) {
-    return false;
-  }
-
-  if (onlyAdmins) {
-    return Object.values(Admins).includes(interaction.user.id);
-  }
-
-  return true;
+  return shipment;
 };
