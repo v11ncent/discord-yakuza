@@ -2,10 +2,10 @@
 import {
   SlashCommandBuilder,
   CommandInteraction,
-  TextChannel,
-  Message,
+  Guild,
+  ChannelType,
 } from "discord.js";
-import { isInteractionAllowed, isGuildTextChannel } from "../helpers/index";
+import { isInteractionAllowed } from "../helpers/index";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,11 +13,11 @@ module.exports = {
     .setDescription("Fetches & stores message data in the database."),
 
   async execute(interaction: CommandInteraction) {
-    const channel = interaction.channel;
+    const guild = interaction.guild;
 
-    if (isInteractionAllowed(interaction) && isGuildTextChannel(channel)) {
-      const messages = await getAllMessages(channel);
-      await interaction.reply(messages.toString().substring(0, 100));
+    if (isInteractionAllowed(interaction) && guild) {
+      await getAllGuildMessages(guild);
+      await interaction.reply("beep boop");
     } else {
       await interaction.reply({
         content: "You can't run this command unless you're an admin 🤭",
@@ -27,24 +27,31 @@ module.exports = {
   },
 };
 
+// Get all messages in a guild
 // https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
-const getAllMessages = async (
-  channel: TextChannel,
-  limit: number = 100,
-): Promise<Message[]> => {
-  const shipment: Message[] = [];
-  const manager = channel.messages;
-  let pivot = null;
+const getAllGuildMessages = async (guild: Guild) => {
+  const channels = await getAllGuildTextChannels(guild);
+  console.log(channels);
 
-  while (shipment.length < limit) {
-    const parts: any = await manager.fetch({
-      limit: limit < 100 ? limit : 100, // Max messages per call is 100
-      before: pivot?.id,
-    });
+  // const shipment: Message[] = [];
+  // const manager = channel.messages;
+  // let pivot = null;
 
-    pivot = parts.last(); // Move the pointer to the last message fetched
-    parts.forEach((part: any) => shipment.push(part));
-  }
+  // while (shipment.length < limit) {
+  //   const parts: any = await manager.fetch({
+  //     limit: limit < 100 ? limit : 100, // Max messages per call is 100
+  //     before: pivot?.id,
+  //   });
 
-  return shipment;
+  //   pivot = parts.last(); // Move the pointer to the last message fetched
+  //   parts.forEach((part: any) => shipment.push(part));
+  // }
+
+  // return shipment;
+};
+
+const getAllGuildTextChannels = async (guild: Guild) => {
+  return guild.channels.cache.filter(
+    (channel) => channel !== null && channel.type === ChannelType.GuildText,
+  );
 };
