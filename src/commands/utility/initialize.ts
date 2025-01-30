@@ -4,6 +4,7 @@ import {
   CommandInteraction,
   Guild,
   ChannelType,
+  TextChannel,
 } from "discord.js";
 import { isInteractionAllowed } from "../helpers/index";
 
@@ -16,8 +17,12 @@ module.exports = {
     const guild = interaction.guild;
 
     if (isInteractionAllowed(interaction) && guild) {
-      await getAllGuildMessages(guild);
-      await interaction.reply("beep boop");
+      // Defer reply since getAllGuildMessages() takes longer than 3 seconds,
+      // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
+      await interaction.deferReply({ ephemeral: true });
+      getAllGuildMessages(guild).then(async () => {
+        await interaction.editReply("Initialization completed !!");
+      });
     } else {
       await interaction.reply({
         content: "You can't run this command unless you're an admin 🤭",
@@ -27,27 +32,39 @@ module.exports = {
   },
 };
 
-// Get all messages in a guild
-// https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
 const getAllGuildMessages = async (guild: Guild) => {
   const channels = await getAllGuildTextChannels(guild);
-  console.log(channels);
+  const channel = channels.values().next().value;
 
-  // const shipment: Message[] = [];
-  // const manager = channel.messages;
-  // let pivot = null;
+  if (channel) await getAllMessagesFromChannel(channel);
+};
 
-  // while (shipment.length < limit) {
-  //   const parts: any = await manager.fetch({
-  //     limit: limit < 100 ? limit : 100, // Max messages per call is 100
-  //     before: pivot?.id,
-  //   });
+// Get all messages in a channel
+// https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
+const getAllMessagesFromChannel = async (channel: TextChannel) => {
+  let pack = await channel.messages.fetch({ limit: 100 });
+  let pivot = pack.last();
+  let messages = [...pack.values()];
 
-  //   pivot = parts.last(); // Move the pointer to the last message fetched
-  //   parts.forEach((part: any) => shipment.push(part));
-  // }
+  console.log(
+    `Getting all messages from ${channel.name}: ${messages.length} / 1000...`,
+  );
 
-  // return shipment;
+  while (pivot !== undefined && messages.length < 10000) {
+    pack = await channel.messages.fetch({
+      limit: 100,
+      before: pivot.id,
+    });
+
+    pivot = pack.last();
+    messages = [...messages, ...pack.values()];
+    console.log(
+      `Getting all messages from ${channel.name}: ${messages.length} / 1000...`,
+    );
+  }
+
+  console.log(`${channel.name} channel message fetch operation finished.`);
+  return messages;
 };
 
 const getAllGuildTextChannels = async (guild: Guild) => {
