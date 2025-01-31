@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Leaderboard for yakuza ups / downs / trues",
   "scripts": {
-    "start": "node -r dotenv/config ./build/main.js",
+    "start": "tsc && node -r dotenv/config ./build/main.js",
     "start-envless": "node ./build/main.js",
     "start-server": "node ./build/server/index.js",
     "deploy": "node -r dotenv/config ./build/deploy.js",

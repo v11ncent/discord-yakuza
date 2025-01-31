@@ -1,13 +1,27 @@
-import { SlashCommandBuilder, CommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { initialize } from "./initialize";
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("leaderboard")
-    .setDescription("Displays the leaderboard."),
-  async execute(interaction: CommandInteraction) {
-    await interaction.reply({
-      ephemeral: true,
-      content: "Pretend there's a leaderboard here!",
-    });
+    .setDescription("Yakuza leaderboard commands")
+    .addSubcommand((subcommand) =>
+      subcommand
+        .setName("initialize")
+        .setDescription(
+          "Initializes leaderboard by crawling all guild messages and storing inside database",
+        ),
+    ),
+
+  async execute(interaction: ChatInputCommandInteraction) {
+    const subcommand = interaction.options.getSubcommand();
+
+    switch (subcommand) {
+      case "initialize":
+        initialize(interaction);
+        break;
+      default:
+        break;
+    }
   },
 };

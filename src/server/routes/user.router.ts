@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../services/database.service";
-import User from "../models/user";
+import User from "../../shared/user";
 
 export const usersRouter = express.Router();
 usersRouter.use(express.json());

@@ -4,7 +4,9 @@ import * as fs from "fs";
 import * as path from "path";
 
 const BOT_TOKEN = process.env["BOT_TOKEN"];
-const client = new CommandsClient({ intents: [GatewayIntentBits.Guilds] });
+const client = new CommandsClient({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
+});
 client.commands = new Collection();
 
 const foldersPath = path.join(__dirname, "commands");
