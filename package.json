@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Leaderboard for yakuza ups / downs / trues",
   "scripts": {
-    "start": "tsc && node -r dotenv/config ./build/main.js",
-    "start-envless": "node ./build/main.js",
-    "start-server": "node ./build/server/index.js",
+    "client": "tsc && node -r dotenv/config ./build/main.js",
+    "server": "tsc && node ./build/server/index.js",
+    "start": "tsc && node -r dotenv/config ./build/main.js && node ./build/server/index.js",
     "deploy": "node -r dotenv/config ./build/deploy.js",
     "watch": "tsc --watch",
     "build": "tsc"
