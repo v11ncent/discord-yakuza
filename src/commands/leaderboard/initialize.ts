@@ -1,6 +1,5 @@
 // Fetches all messages & stores data in database
 import {
-  SlashCommandBuilder,
   CommandInteraction,
   Guild,
   ChannelType,
@@ -8,6 +7,7 @@ import {
   Message,
   User,
   EmbedBuilder,
+  MessageFlags,
 } from "discord.js";
 import { isInteractionAllowed } from "../helpers/index";
 
@@ -17,43 +17,37 @@ type Ranking = {
   count: number;
 };
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("initialize")
-    .setDescription("Fetches & stores message data in the database."),
+export const initialize = async (interaction: CommandInteraction) => {
+  if (isInteractionAllowed(interaction) && interaction.guild) {
+    // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    const leaderboard = await initializeLeaderboard(interaction.guild);
+    const embed = new EmbedBuilder()
+      .setTitle("Yakuza Leaderboard")
+      .setURL("https://discordumpire.com")
+      .setThumbnail(
+        "https://encycolorpedia.com/emojis/chart-increasing-with-yen.png",
+      )
+      .setTimestamp()
+      .setColor("#77b255");
 
-  async execute(interaction: CommandInteraction) {
-    if (isInteractionAllowed(interaction) && interaction.guild) {
-      // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
-      await interaction.deferReply({ ephemeral: true });
-      const leaderboard = await initializeLeaderboard(interaction.guild);
-      const embed = new EmbedBuilder()
-        .setTitle("Yakuza Leaderboard")
-        .setURL("https://discordumpire.com")
-        .setThumbnail(
-          "https://encycolorpedia.com/emojis/chart-increasing-with-yen.png",
-        )
-        .setTimestamp()
-        .setColor("#77b255");
-
-      leaderboard?.slice(0, 5).forEach((ranking, index) => {
-        embed.addFields({
-          name: `**Rank: #${++index}**`,
-          value: `
-          **${ranking.member}**: ${ranking.message.content}
-          Yakuzas: ${ranking.count} -- ${ranking.message.url}
-          `,
-        });
+    leaderboard?.slice(0, 5).forEach((ranking, index) => {
+      embed.addFields({
+        name: `**Rank: #${++index}**`,
+        value: `
+        **${ranking.member}**: ${ranking.message.content}
+        Yakuzas: ${ranking.count} — ${ranking.message.url}
+        `,
       });
+    });
 
-      await interaction.editReply({ embeds: [embed] });
-    } else {
-      await interaction.reply({
-        content: "You can't run this command unless you're an admin 🤭",
-        ephemeral: true,
-      });
-    }
-  },
+    await interaction.editReply({ embeds: [embed] });
+  } else {
+    await interaction.reply({
+      content: "You can't run this command unless you're an admin 🤭",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
 };
 
 /**
@@ -122,7 +116,7 @@ const getAllChannelMessages = async (
   let messages = await getQualifyingMessages(channel);
   let pivot = messages.pop()?.id;
 
-  while (pivot !== undefined && messages.length < 10000) {
+  while (pivot !== undefined && messages.length < 1000) {
     let batch = await getQualifyingMessages(channel, pivot);
     messages = [...messages, ...batch];
     pivot = batch.pop()?.id;

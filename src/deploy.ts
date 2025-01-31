@@ -26,33 +26,40 @@ for (const folder of commandFolders) {
   }
 }
 
-const rest = new REST().setToken(process.env["BOT_TOKEN"]!);
+const token = process.env["BOT_TOKEN"];
+const client = process.env["CLIENT_ID"];
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+if (token && client) {
+  const rest = new REST().setToken(token);
 
-rl.question(
-  `Please input the guild ID to deploy bot commands to: `,
-  async (guildId) => {
-    try {
-      console.log(
-        `Started refreshing ${commands.length} application (/) commands.`,
-      );
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
 
-      const data: any = await rest.put(
-        Routes.applicationGuildCommands(process.env["CLIENT_ID"]!, guildId),
-        { body: commands },
-      );
+  rl.question(
+    `Please input the guild ID to deploy bot commands to: `,
+    async (guildId) => {
+      try {
+        console.log(
+          `Started refreshing ${commands.length} application (/) commands.`,
+        );
 
-      console.log(
-        `Successfully reloaded ${data.length} application (/) commands.`,
-      );
-    } catch (error) {
-      console.error(error);
-    }
+        const data: any = await rest.put(
+          Routes.applicationGuildCommands(client, guildId),
+          { body: commands },
+        );
 
-    rl.close();
-  },
-);
+        console.log(
+          `Successfully reloaded ${data.length} application (/) commands.`,
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      rl.close();
+    },
+  );
+} else {
+  console.error("Missing bot tokens!");
+}
