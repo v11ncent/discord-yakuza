@@ -84,7 +84,7 @@ const getAllGuildMessages = async (guild: Guild) => {
   const channels = await getAllGuildTextChannels(guild);
 
   if (channels) {
-    // Using `Promise.all()` here so that we get an array of data rather than promises
+    // Using `Promise.all()` here so we wait for all promises to resolve before returning
     const messages = await Promise.all(channels.map(getAllChannelMessages));
     return messages.flat();
   }
@@ -116,7 +116,7 @@ const getAllChannelMessages = async (
   let messages = await getQualifyingMessages(channel);
   let pivot = messages.pop()?.id;
 
-  while (pivot !== undefined && messages.length < 1000) {
+  while (pivot !== undefined && messages.length < 100) {
     let batch = await getQualifyingMessages(channel, pivot);
     messages = [...messages, ...batch];
     pivot = batch.pop()?.id;
@@ -173,7 +173,7 @@ const isTextMessage = (message: Message): boolean => {
 const getMessageReactionCount = (
   message: Message,
   filter: string[] = ["💹"],
-) => {
+): number => {
   const [...all] = message.reactions.cache.values();
 
   const find = all.filter((reaction) => {
