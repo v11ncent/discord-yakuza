@@ -7,6 +7,7 @@ import {
   TextChannel,
   Message,
   User,
+  EmbedBuilder,
 } from "discord.js";
 import { isInteractionAllowed } from "../helpers/index";
 
@@ -26,7 +27,26 @@ module.exports = {
       // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
       await interaction.deferReply({ ephemeral: true });
       const leaderboard = await initializeLeaderboard(interaction.guild);
-      await interaction.editReply(`Leaderboard initialized: ${leaderboard}`);
+      const embed = new EmbedBuilder()
+        .setTitle("Yakuza Leaderboard")
+        .setURL("https://discordumpire.com")
+        .setThumbnail(
+          "https://encycolorpedia.com/emojis/chart-increasing-with-yen.png",
+        )
+        .setTimestamp()
+        .setColor("#77b255");
+
+      leaderboard?.slice(0, 5).forEach((ranking, index) => {
+        embed.addFields({
+          name: `**Rank: #${++index}**`,
+          value: `
+          **${ranking.member}**: ${ranking.message.content}
+          Yakuzas: ${ranking.count} -- ${ranking.message.url}
+          `,
+        });
+      });
+
+      await interaction.editReply({ embeds: [embed] });
     } else {
       await interaction.reply({
         content: "You can't run this command unless you're an admin 🤭",
@@ -44,18 +64,17 @@ const initializeLeaderboard = async (guild: Guild) => {
   const leaderboard: Ranking[] = [];
   const messages = await getAllGuildMessages(guild);
 
-  console.log("Messages: " + messages.splice(0, 3));
-
+  // updateRankings() would go hard here . . .
   if (messages) {
-    // messages.forEach((message) => {
-    //   leaderboard.push({
-    //     member: message.author,
-    //     message: message,
-    //     count: getMessageReactionCount(message),
-    //   });
-    // });
+    messages.forEach((message) => {
+      leaderboard.push({
+        member: message.author,
+        message: message,
+        count: getMessageReactionCount(message),
+      });
+    });
 
-    // leaderboard.sort((a, b) => b.count - a.count);
+    leaderboard.sort((a, b) => b.count - a.count);
     return leaderboard;
   }
 
@@ -103,7 +122,7 @@ const getAllChannelMessages = async (
   let messages = await getQualifyingMessages(channel);
   let pivot = messages.pop()?.id;
 
-  while (pivot !== undefined && messages.length < 100) {
+  while (pivot !== undefined && messages.length < 10000) {
     let batch = await getQualifyingMessages(channel, pivot);
     messages = [...messages, ...batch];
     pivot = batch.pop()?.id;
@@ -148,7 +167,7 @@ const isBotMessage = (message: Message): boolean => {
  * @returns `boolean`
  */
 const isTextMessage = (message: Message): boolean => {
-  return message.content !== "";
+  return message.content !== "" && message.embeds.length === 0;
 };
 
 /**
@@ -157,16 +176,16 @@ const isTextMessage = (message: Message): boolean => {
  * @param filter A list of reactions to filter
  * @returns A `number` of filtered reactions
  */
-// const getMessageReactionCount = (
-//   message: Message,
-//   filter: string[] = ["💹"],
-// ) => {
-//   const [...all] = message.reactions.cache.values();
+const getMessageReactionCount = (
+  message: Message,
+  filter: string[] = ["💹"],
+) => {
+  const [...all] = message.reactions.cache.values();
 
-//   const find = all.filter((reaction) => {
-//     const name = reaction.emoji.name ?? "";
-//     return filter.includes(name);
-//   });
+  const find = all.filter((reaction) => {
+    const name = reaction.emoji.name ?? "";
+    return filter.includes(name);
+  });
 
-//   return find[0]?.count ?? 0;
-// };
+  return find[0]?.count ?? 0;
+};
