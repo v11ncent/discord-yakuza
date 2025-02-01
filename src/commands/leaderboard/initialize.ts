@@ -1,27 +1,40 @@
-// Fetches all messages & stores data in database
 import {
   CommandInteraction,
   Guild,
-  ChannelType,
   TextChannel,
   Message,
-  User,
   EmbedBuilder,
   MessageFlags,
+  MessageReaction,
 } from "discord.js";
-import { isInteractionAllowed } from "../helpers/index";
-
-type Ranking = {
-  member: User;
-  message: Message;
-  count: number;
-};
+import {
+  isBotMessage,
+  isInteractionAllowed,
+  isTextMessage,
+  getAllGuildTextChannels,
+} from "../helpers/index";
+import {
+  IMember,
+  IMessage,
+  IRanking,
+  IReaction,
+} from "../../shared/types/leaderboard.interface";
 
 export const initialize = async (interaction: CommandInteraction) => {
   if (isInteractionAllowed(interaction) && interaction.guild) {
     // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const leaderboard = await initializeLeaderboard(interaction.guild);
+
+    if (!leaderboard) {
+      console.error("Leaderboard is empty.");
+      interaction.editReply(
+        "Leaderboard was not able to be initialized. Please check logs.",
+      );
+      return;
+    }
+
+    // Create a custom EmbedBuilder in `helpers` eventually
     const embed = new EmbedBuilder()
       .setTitle("Yakuza Leaderboard")
       .setURL("https://discordumpire.com")
@@ -54,26 +67,74 @@ export const initialize = async (interaction: CommandInteraction) => {
  * Create leaderboard with top rated messages
  * @returns A leadboard of `Ranking`
  */
-const initializeLeaderboard = async (guild: Guild) => {
-  const leaderboard: Ranking[] = [];
+const initializeLeaderboard = async (
+  guild: Guild,
+): Promise<IRanking[] | []> => {
+  const leaderboard: IRanking[] = [];
   const messages = await getAllGuildMessages(guild);
 
-  // updateRankings() would go hard here . . .
-  if (messages) {
-    messages.forEach((message) => {
-      leaderboard.push({
-        member: message.author,
-        message: message,
-        count: getMessageReactionCount(message),
-      });
+  if (!messages) return [];
+
+  messages.forEach((message) => {
+    const transformed = mutateMessage(message);
+    const reaction = getMessageReaction(message);
+
+    leaderboard.push({
+      member: mutateMember(message),
+      message: transformed,
+      count: reaction.count,
     });
+  });
 
-    leaderboard.sort((a, b) => b.count - a.count);
-    return leaderboard;
-  }
+  leaderboard.sort((a, b) => b.count - a.count);
+  return leaderboard;
+};
 
-  console.error("Error initializing leaderboard: `messages` is null.");
-  return null;
+const mutateMember = (message: Message): IMember => {
+  return {
+    id: message.author.id,
+    username: message.author.username,
+    avatar: message.author.avatar,
+  };
+};
+
+const mutateMessage = (message: Message): IMessage => {
+  return {
+    id: message.id,
+    author: mutateMember(message),
+    content: message.content,
+    reaction: mutateReaction(getMessageReaction(message)),
+    date: message.createdAt,
+    url: message.url,
+  };
+};
+
+const mutateReaction = (reaction: MessageReaction): IReaction => {
+  const id = reaction.emoji.id;
+  const name = reaction.emoji.id;
+  const count = reaction.count;
+
+  return { id, name, count };
+};
+
+/**
+ * Get specific reaction on a message
+ * @param message A text message
+ * @param filter The name of the reaction or emoji to filter for
+ * @returns A specific reaction or null if one isn't found
+ */
+const getMessageReaction = (
+  message: Message,
+  filter: string = "💹",
+): MessageReaction | null => {
+  const [...all] = message.reactions.cache.values();
+
+  const find = all.filter((reaction) => {
+    const name = reaction.emoji.name ?? "";
+    return filter.includes(name);
+  });
+
+  return find.pop() ?? null;
 };
 
 /**
@@ -91,17 +152,6 @@ const getAllGuildMessages = async (guild: Guild) => {
 
   console.error("Error fetching guild messages");
   return [];
-};
-
-/**
- * Gets all `TextChannel` in a `Guild`
- * @param guild A `Guild`
- * @returns A Collection of `TextChannel`
- */
-const getAllGuildTextChannels = async (guild: Guild) => {
-  return guild.channels.cache.filter(
-    (channel) => channel !== null && channel.type === ChannelType.GuildText,
-  );
 };
 
 /**
@@ -129,7 +179,7 @@ const getAllChannelMessages = async (
  * Filters an array of messages
  * @param messages An array of `Message`
  * @param pivot
- * @returns An array of `Message` that are written by a user and contain text
+ * @returns An array of Messages that are written by a user, contain text, and have a specific reaction
  */
 const getQualifyingMessages = async (
   channel: TextChannel,
@@ -142,44 +192,10 @@ const getQualifyingMessages = async (
   let messages = Array.from(batch.values());
 
   return messages.filter((message) => {
-    return isTextMessage(message) && !isBotMessage(message);
+    return (
+      isTextMessage(message) &&
+      !isBotMessage(message) &&
+      !!getMessageReaction(message) // If message contains specified reaction
+    );
   });
-};
-
-/**
- * Determines if `Message` author was a bot
- * @param message A `Message`
- * @returns `boolean`
- */
-const isBotMessage = (message: Message): boolean => {
-  return message.author.bot;
-};
-
-/**
- * Determines if `Message` contains text.
- * @param message
- * @returns `boolean`
- */
-const isTextMessage = (message: Message): boolean => {
-  return message.content !== "" && message.embeds.length === 0;
-};
-
-/**
- * Get specific reaction counts on a message
- * @param message A text message
- * @param filter A list of reactions to filter
- * @returns A `number` of filtered reactions
- */
-const getMessageReactionCount = (
-  message: Message,
-  filter: string[] = ["💹"],
-): number => {
-  const [...all] = message.reactions.cache.values();
-
-  const find = all.filter((reaction) => {
-    const name = reaction.emoji.name ?? "";
-    return filter.includes(name);
-  });
-
-  return find[0]?.count ?? 0;
 };

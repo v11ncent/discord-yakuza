@@ -1,6 +1,35 @@
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message, Guild, ChannelType } from "discord.js";
 import { Admins } from "../../shared/enums/admins";
 import { Servers } from "../../shared/enums/servers";
+
+/**
+ * Gets all `TextChannel` in a `Guild`
+ * @param guild A `Guild`
+ * @returns A Collection of `TextChannel`
+ */
+export const getAllGuildTextChannels = async (guild: Guild) => {
+  return guild.channels.cache.filter(
+    (channel) => channel !== null && channel.type === ChannelType.GuildText,
+  );
+};
+
+/**
+ * Determines if `Message` author was a bot
+ * @param message A `Message`
+ * @returns `boolean`
+ */
+export const isBotMessage = (message: Message): boolean => {
+  return message.author.bot;
+};
+
+/**
+ * Determines if `Message` contains text.
+ * @param message
+ * @returns `boolean`
+ */
+export const isTextMessage = (message: Message): boolean => {
+  return message.content !== "" && message.embeds.length === 0;
+};
 
 /**
  * Checks if member is authorized to call interaction

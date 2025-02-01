@@ -1,3 +1,13 @@
+## Streamlining message fetching and sending to backend
+
+Very in the weeds. High level overview of what we need to do:
+
+1. Get all messages that pass our qualifiers
+2. Transform message data into format that's acceptable to backend model
+3. Send model data to database
+
+4. getAllGuildMessages() returns all guild messages
+
 ## Message fetching
 
 I want to fetch all messages from all channels in the guild that the `initialize` command was called from. We can't fetch messages from a specific user, so we need to sort through all the messages in a guild, and then filter by member.
