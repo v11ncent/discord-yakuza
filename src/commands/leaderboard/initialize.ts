@@ -12,13 +12,11 @@ import {
   isInteractionAllowed,
   isTextMessage,
   getAllGuildTextChannels,
+  transformReaction,
+  transformMember,
+  transformMessage,
 } from "../helpers/index";
-import {
-  IMember,
-  IMessage,
-  IRanking,
-  IReaction,
-} from "../../shared/types/leaderboard.interface";
+import { IRanking } from "../../shared/types/leaderboard.interface";
 
 export const initialize = async (interaction: CommandInteraction) => {
   if (isInteractionAllowed(interaction) && interaction.guild) {
@@ -26,7 +24,7 @@ export const initialize = async (interaction: CommandInteraction) => {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const leaderboard = await initializeLeaderboard(interaction.guild);
 
-    if (!leaderboard) {
+    if (!leaderboard || leaderboard.length < 1) {
       console.error("Leaderboard is empty.");
       interaction.editReply(
         "Leaderboard was not able to be initialized. Please check logs.",
@@ -48,7 +46,7 @@ export const initialize = async (interaction: CommandInteraction) => {
       embed.addFields({
         name: `**Rank: #${++index}**`,
         value: `
-        **${ranking.member}**: ${ranking.message.content}
+        **${ranking.member.username}**: ${ranking.message.content}
         Yakuzas: ${ranking.count} — ${ranking.message.url}
         `,
       });
@@ -72,17 +70,27 @@ const initializeLeaderboard = async (
 ): Promise<IRanking[] | []> => {
   const leaderboard: IRanking[] = [];
   const messages = await getAllGuildMessages(guild);
-
   if (!messages) return [];
 
   messages.forEach((message) => {
-    const transformed = mutateMessage(message);
+    // I'd like to filter for reaction in `getQualifyingMessages()`
+    // but I'm unable to get TypeScript to infer messages
+    // that reach this point will contain a reaction
     const reaction = getMessageReaction(message);
+    if (!reaction) return;
+
+    const mutatedReaction = transformReaction(reaction);
+    const mutatedMember = transformMember(message.author);
+    const mutatedMessage = transformMessage(
+      message,
+      mutatedMember,
+      mutatedReaction,
+    );
 
     leaderboard.push({
-      member: mutateMember(message),
-      message: transformed,
-      count: reaction.count,
+      member: mutatedMember,
+      message: mutatedMessage,
+      count: mutatedReaction.count,
     });
   });
 
@@ -90,31 +98,25 @@ const initializeLeaderboard = async (
   return leaderboard;
 };
 
-const mutateMember = (message: Message): IMember => {
-  return {
-    id: message.author.id,
-    username: message.author.username,
-    avatar: message.author.avatar,
-  };
-};
+/**
+ * Filters an array of messages
+ * @param messages An array of `Message`
+ * @param pivot
+ * @returns An array of Messages that are written by a user and contains text
+ */
+const getQualifyingMessages = async (
+  channel: TextChannel,
+  pivot?: string,
+): Promise<Message[]> => {
+  const batch = await channel.messages.fetch({
+    limit: 100,
+    ...(pivot && { before: pivot }), // Cool! Using spread to optionally include
+  });
+  let messages = Array.from(batch.values());
 
-const mutateMessage = (message: Message): IMessage => {
-  return {
-    id: message.id,
-    author: mutateMember(message),
-    content: message.content,
-    reaction: mutateReaction(getMessageReaction(message)),
-    date: message.createdAt,
-    url: message.url,
-  };
-};
-
-const mutateReaction = (reaction: MessageReaction): IReaction => {
-  const id = reaction.emoji.id;
-  const name = reaction.emoji.id;
-  const count = reaction.count;
-
-  return { id, name, count };
+  return messages.filter((message) => {
+    return isTextMessage(message) && !isBotMessage(message);
+  });
 };
 
 /**
@@ -127,14 +129,13 @@ const getMessageReaction = (
   message: Message,
   filter: string = "💹",
 ): MessageReaction | null => {
-  const [...all] = message.reactions.cache.values();
-
-  const find = all.filter((reaction) => {
-    const name = reaction.emoji.name ?? "";
-    return filter.includes(name);
+  // Collections extend Maps so we can use filter() and first()
+  // https://discordjs.guide/additional-info/collections.html#array-like-methods
+  const reaction = message.reactions.cache.filter((reaction) => {
+    return reaction.emoji.name === filter;
   });
 
-  return find.pop() ?? null;
+  return reaction.first() ?? null;
 };
 
 /**
@@ -173,29 +174,4 @@ const getAllChannelMessages = async (
   }
 
   return messages;
-};
-
-/**
- * Filters an array of messages
- * @param messages An array of `Message`
- * @param pivot
- * @returns An array of Messages that are written by a user, contain text, and have a specific reaction
- */
-const getQualifyingMessages = async (
-  channel: TextChannel,
-  pivot?: string,
-): Promise<Message[]> => {
-  const batch = await channel.messages.fetch({
-    limit: 100,
-    ...(pivot && { before: pivot }), // Cool! Using spread to optionally include
-  });
-  let messages = Array.from(batch.values());
-
-  return messages.filter((message) => {
-    return (
-      isTextMessage(message) &&
-      !isBotMessage(message) &&
-      !!getMessageReaction(message) // If message contains specified reaction
-    );
-  });
 };
