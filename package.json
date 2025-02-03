@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Leaderboard for yakuza ups / downs / trues",
   "scripts": {
-    "start": "tsc && node -r dotenv/config ./build/main.js",
-    "start-envless": "node ./build/main.js",
-    "start-server": "node ./build/server/index.js",
+    "client": "tsc && node -r dotenv/config ./build/main.js",
+    "server": "tsc && node ./build/server/index.js",
+    "start": "tsc && node -r dotenv/config ./build/main.js && node ./build/server/index.js",
     "deploy": "node -r dotenv/config ./build/deploy.js",
     "watch": "tsc --watch",
     "build": "tsc"
@@ -16,7 +16,8 @@
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
-    "mongodb": "^6.9.0"
+    "mongodb": "^6.9.0",
+    "mongoose": "^8.9.6"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",

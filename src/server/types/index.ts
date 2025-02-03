@@ -1,7 +1,7 @@
 // https://www.mongodb.com/resources/products/compatibilities/using-typescript-with-mongodb-tutorial
 import { ObjectId } from "mongodb";
 
-type Emoji = {
+type Reaction = {
   name: string;
   count: number;
 };
@@ -10,7 +10,7 @@ export default class User {
   constructor(
     public server: string,
     public username: string,
-    public emojis: Emoji[],
+    public reaction: Reaction[],
     public id?: ObjectId,
   ) {}
 }

@@ -1,5 +1,5 @@
-import { Events, CommandInteraction } from "discord.js";
-import { CommandsClient } from "../shared/commandsClient.js";
+import { MessageFlags, Events, CommandInteraction } from "discord.js";
+import { CommandsClient } from "../shared/types/commandsClient.js";
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -7,7 +7,6 @@ module.exports = {
     if (!interaction.isChatInputCommand()) return;
 
     const botClient = interaction.client as CommandsClient;
-
     const command: any = botClient.commands?.get(interaction.commandName);
 
     if (!command) {
@@ -21,15 +20,16 @@ module.exports = {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
+
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: "There was an error while executing this command!",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: "There was an error while executing this command!",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }

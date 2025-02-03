@@ -1,27 +1,38 @@
-// Fetches all messages & stores data in database
 import {
   CommandInteraction,
   Guild,
-  ChannelType,
   TextChannel,
   Message,
-  User,
   EmbedBuilder,
   MessageFlags,
+  MessageReaction,
 } from "discord.js";
-import { isInteractionAllowed } from "../helpers/index";
-
-type Ranking = {
-  member: User;
-  message: Message;
-  count: number;
-};
+import {
+  isBotMessage,
+  isInteractionAllowed,
+  isTextMessage,
+  getAllGuildTextChannels,
+  transformReaction,
+  transformMember,
+  transformMessage,
+} from "../helpers/index";
+import { IRanking } from "../../shared/types/leaderboard.interface";
 
 export const initialize = async (interaction: CommandInteraction) => {
   if (isInteractionAllowed(interaction) && interaction.guild) {
     // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const leaderboard = await initializeLeaderboard(interaction.guild);
+
+    if (!leaderboard || leaderboard.length < 1) {
+      console.error("Leaderboard is empty.");
+      interaction.editReply(
+        "Leaderboard was not able to be initialized. Please check logs.",
+      );
+      return;
+    }
+
+    // Create a custom EmbedBuilder in `helpers` eventually
     const embed = new EmbedBuilder()
       .setTitle("Yakuza Leaderboard")
       .setURL("https://discordumpire.com")
@@ -35,7 +46,7 @@ export const initialize = async (interaction: CommandInteraction) => {
       embed.addFields({
         name: `**Rank: #${++index}**`,
         value: `
-        **${ranking.member}**: ${ranking.message.content}
+        **${ranking.member.username}**: ${ranking.message.content}
         Yakuzas: ${ranking.count} — ${ranking.message.url}
         `,
       });
@@ -54,26 +65,77 @@ export const initialize = async (interaction: CommandInteraction) => {
  * Create leaderboard with top rated messages
  * @returns A leadboard of `Ranking`
  */
-const initializeLeaderboard = async (guild: Guild) => {
-  const leaderboard: Ranking[] = [];
+const initializeLeaderboard = async (
+  guild: Guild,
+): Promise<IRanking[] | []> => {
+  const leaderboard: IRanking[] = [];
   const messages = await getAllGuildMessages(guild);
+  if (!messages) return [];
 
-  // updateRankings() would go hard here . . .
-  if (messages) {
-    messages.forEach((message) => {
-      leaderboard.push({
-        member: message.author,
-        message: message,
-        count: getMessageReactionCount(message),
-      });
+  messages.forEach((message) => {
+    // I'd like to filter for reaction in `getQualifyingMessages()`
+    // but I'm unable to get TypeScript to infer messages
+    // that reach this point will contain a reaction
+    const reaction = getMessageReaction(message);
+    if (!reaction) return;
+
+    const mutatedReaction = transformReaction(reaction);
+    const mutatedMember = transformMember(message.author);
+    const mutatedMessage = transformMessage(
+      message,
+      mutatedMember,
+      mutatedReaction,
+    );
+
+    leaderboard.push({
+      member: mutatedMember,
+      message: mutatedMessage,
+      count: mutatedReaction.count,
     });
+  });
 
-    leaderboard.sort((a, b) => b.count - a.count);
-    return leaderboard;
-  }
+  leaderboard.sort((a, b) => b.count - a.count);
+  return leaderboard;
+};
 
-  console.error("Error initializing leaderboard: `messages` is null.");
-  return null;
+/**
+ * Filters an array of messages
+ * @param messages An array of `Message`
+ * @param pivot
+ * @returns An array of Messages that are written by a user and contains text
+ */
+const getQualifyingMessages = async (
+  channel: TextChannel,
+  pivot?: string,
+): Promise<Message[]> => {
+  const batch = await channel.messages.fetch({
+    limit: 100,
+    ...(pivot && { before: pivot }), // Cool! Using spread to optionally include
+  });
+  let messages = Array.from(batch.values());
+
+  return messages.filter((message) => {
+    return isTextMessage(message) && !isBotMessage(message);
+  });
+};
+
+/**
+ * Get specific reaction on a message
+ * @param message A text message
+ * @param filter The name of the reaction or emoji to filter for
+ * @returns A specific reaction or null if one isn't found
+ */
+const getMessageReaction = (
+  message: Message,
+  filter: string = "💹",
+): MessageReaction | null => {
+  // Collections extend Maps so we can use filter() and first()
+  // https://discordjs.guide/additional-info/collections.html#array-like-methods
+  const reaction = message.reactions.cache.filter((reaction) => {
+    return reaction.emoji.name === filter;
+  });
+
+  return reaction.first() ?? null;
 };
 
 /**
@@ -91,17 +153,6 @@ const getAllGuildMessages = async (guild: Guild) => {
 
   console.error("Error fetching guild messages");
   return [];
-};
-
-/**
- * Gets all `TextChannel` in a `Guild`
- * @param guild A `Guild`
- * @returns A Collection of `TextChannel`
- */
-const getAllGuildTextChannels = async (guild: Guild) => {
-  return guild.channels.cache.filter(
-    (channel) => channel !== null && channel.type === ChannelType.GuildText,
-  );
 };
 
 /**
@@ -123,63 +174,4 @@ const getAllChannelMessages = async (
   }
 
   return messages;
-};
-
-/**
- * Filters an array of messages
- * @param messages An array of `Message`
- * @param pivot
- * @returns An array of `Message` that are written by a user and contain text
- */
-const getQualifyingMessages = async (
-  channel: TextChannel,
-  pivot?: string,
-): Promise<Message[]> => {
-  const batch = await channel.messages.fetch({
-    limit: 100,
-    ...(pivot && { before: pivot }), // Cool! Using spread to optionally include
-  });
-  let messages = Array.from(batch.values());
-
-  return messages.filter((message) => {
-    return isTextMessage(message) && !isBotMessage(message);
-  });
-};
-
-/**
- * Determines if `Message` author was a bot
- * @param message A `Message`
- * @returns `boolean`
- */
-const isBotMessage = (message: Message): boolean => {
-  return message.author.bot;
-};
-
-/**
- * Determines if `Message` contains text.
- * @param message
- * @returns `boolean`
- */
-const isTextMessage = (message: Message): boolean => {
-  return message.content !== "" && message.embeds.length === 0;
-};
-
-/**
- * Get specific reaction counts on a message
- * @param message A text message
- * @param filter A list of reactions to filter
- * @returns A `number` of filtered reactions
- */
-const getMessageReactionCount = (
-  message: Message,
-  filter: string[] = ["💹"],
-): number => {
-  const [...all] = message.reactions.cache.values();
-
-  const find = all.filter((reaction) => {
-    const name = reaction.emoji.name ?? "";
-    return filter.includes(name);
-  });
-
-  return find[0]?.count ?? 0;
 };
