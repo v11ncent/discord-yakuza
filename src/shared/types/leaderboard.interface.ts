@@ -7,6 +7,7 @@ export interface ILeaderboard {
 export interface IRanking {
   member: IMember;
   message: IMessage;
+  reaction: IReaction;
   count: IReaction["count"];
 }
 
@@ -26,7 +27,11 @@ export interface IMessage {
 }
 
 export interface IReaction {
-  id: string | null;
-  name: string | null;
+  emoji: IEmoji;
   count: number;
+}
+
+export interface IEmoji {
+  id?: string | null;
+  name: string | null;
 }

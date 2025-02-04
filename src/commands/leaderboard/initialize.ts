@@ -46,6 +46,7 @@ export const initialize = async (interaction: CommandInteraction) => {
       .setColor("#77b255");
 
     leaderboard.forEach((ranking, index) => {
+      console.log(ranking);
       embed.addFields({
         name: `**Rank: #${++index}**`,
         value: `
@@ -93,12 +94,32 @@ const initializeLeaderboard = async (
     leaderboard.push({
       member: mutatedMember,
       message: mutatedMessage,
+      reaction: mutatedReaction,
       count: mutatedReaction.count,
     });
   });
 
   leaderboard.sort((a, b) => b.count - a.count);
   return leaderboard;
+};
+
+/**
+ * Get specific reaction on a message
+ * @param message A text message
+ * @param filter The name of the emoji to filter for
+ * @returns A specific emoji or null if one isn't found
+ */
+const getMessageReaction = (
+  message: Message,
+  filter: string = "💹",
+): MessageReaction | null => {
+  // Collections extend Maps so we can use filter() and first()
+  // https://discordjs.guide/additional-info/collections.html#array-like-methods
+  const reaction = message.reactions.cache.filter((reaction) => {
+    return reaction.emoji.name === filter;
+  });
+
+  return reaction.first() ?? null;
 };
 
 /**
@@ -120,25 +141,6 @@ const getQualifyingMessages = async (
   return messages.filter((message) => {
     return isTextMessage(message) && !isBotMessage(message);
   });
-};
-
-/**
- * Get specific reaction on a message
- * @param message A text message
- * @param filter The name of the reaction or emoji to filter for
- * @returns A specific reaction or null if one isn't found
- */
-const getMessageReaction = (
-  message: Message,
-  filter: string = "💹",
-): MessageReaction | null => {
-  // Collections extend Maps so we can use filter() and first()
-  // https://discordjs.guide/additional-info/collections.html#array-like-methods
-  const reaction = message.reactions.cache.filter((reaction) => {
-    return reaction.emoji.name === filter;
-  });
-
-  return reaction.first() ?? null;
 };
 
 /**

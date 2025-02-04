@@ -5,6 +5,9 @@ import {
   ChannelType,
   MessageReaction,
   User,
+  GuildEmoji,
+  ApplicationEmoji,
+  ReactionEmoji,
 } from "discord.js";
 import { Admins } from "../../shared/enums/admins";
 import { Servers } from "../../shared/enums/servers";
@@ -12,6 +15,7 @@ import {
   IMember,
   IReaction,
   IMessage,
+  IEmoji,
 } from "../../shared/types/leaderboard.interface";
 
 /**
@@ -56,9 +60,22 @@ export const transformMessage = (
  */
 export const transformReaction = (reaction: MessageReaction): IReaction => {
   return {
-    id: reaction.emoji.id,
-    name: reaction.emoji.id,
+    emoji: transformEmoji(reaction.emoji),
     count: reaction.count,
+  };
+};
+
+/**
+ * Transforms an emoji into an `IEmoji`
+ * @param reaction A `MessageReaction`
+ * @returns An `IEmoji`
+ */
+export const transformEmoji = (
+  emoji: GuildEmoji | ReactionEmoji | ApplicationEmoji,
+): IEmoji => {
+  return {
+    ...(emoji.id && { id: emoji.id }),
+    name: emoji.name,
   };
 };
 

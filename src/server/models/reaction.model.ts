@@ -1,10 +1,10 @@
 import { Schema, model } from "mongoose";
+import { emojiSchema } from "./emoji.model";
 import { IReaction } from "../../shared/types/leaderboard.interface";
 
 export const reactionSchema = new Schema<IReaction>({
-  id: { type: String },
-  name: { type: String },
+  emoji: { type: emojiSchema, required: true },
   count: { type: Number, required: true },
 });
 
-export const Reaction = model<IReaction>("Reaction", reactionSchema);
+export const Emoji = model<IReaction>("Reaction", reactionSchema);
