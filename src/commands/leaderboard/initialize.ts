@@ -22,7 +22,10 @@ export const initialize = async (interaction: CommandInteraction) => {
   if (isInteractionAllowed(interaction) && interaction.guild) {
     // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
     await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    const leaderboard = await initializeLeaderboard(interaction.guild);
+    const leaderboard = (await initializeLeaderboard(interaction.guild)).splice(
+      0,
+      10,
+    );
 
     if (!leaderboard || leaderboard.length < 1) {
       console.error("Leaderboard is empty.");
@@ -42,7 +45,7 @@ export const initialize = async (interaction: CommandInteraction) => {
       .setTimestamp()
       .setColor("#77b255");
 
-    leaderboard?.slice(0, 5).forEach((ranking, index) => {
+    leaderboard.forEach((ranking, index) => {
       embed.addFields({
         name: `**Rank: #${++index}**`,
         value: `

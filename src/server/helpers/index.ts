@@ -12,24 +12,21 @@ type EnvironmentVariables = {
  */
 export const environmentVariables = (): EnvironmentVariables => {
   dotenv.config();
+  const connection = process.env["MONGO_DB_CONNECTION_STRING"];
+  const database = process.env["MONGO_DB_NAME"];
+  const collection = process.env["MONGO_COLLECTION_NAME"];
+
+  // We'll eventually need to make this more sophisticated if
+  // we add anymore env variables
+  if (!connection || !database || !collection) {
+    throw new Error("Not all .env variables are initialized.");
+  }
+
   const variables = {
-    connection: process.env["MONGO_DB_CONNECTION_STRING"] ?? "",
-    database: process.env["MONGO_DB_NAME"] ?? "",
-    collection: process.env["MONGO_COLLECTION_NAME"] ?? "",
+    connection,
+    database,
+    collection,
   };
 
   return variables;
 };
-
-// Get this to work . . .
-// const validateEnvironmentVariables = (
-//   variables: EnvironmentVariables,
-// ): EnvironmentVariables => {
-//   for (const [key, value] of Object.entries(variables)) {
-//     if (value === undefined) {
-//       throw new Error(`${key} environment variable is undefined.`);
-//     }
-//   }
-
-//   return variables;
-// };
