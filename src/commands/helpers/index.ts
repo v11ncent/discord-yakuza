@@ -8,6 +8,7 @@ import {
   GuildEmoji,
   ApplicationEmoji,
   ReactionEmoji,
+  EmbedBuilder,
 } from "discord.js";
 import { Admins } from "../../shared/enums/admins";
 import { Servers } from "../../shared/enums/servers";
@@ -16,7 +17,21 @@ import {
   IReaction,
   IMessage,
   IEmoji,
+  ILeaderboard,
 } from "../../shared/types/leaderboard.interface";
+
+export const postLeaderboard = async (
+  leaderboard: ILeaderboard,
+): Promise<void> => {
+  const endpoint = "http://localhost:3000/leaderboard";
+  await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(leaderboard),
+  })
+    .then(console.log)
+    .catch(console.log);
+};
 
 /**
  * Transforms a `User` into an `IMember`
@@ -41,15 +56,13 @@ export const transformMember = (user: User): IMember => {
 export const transformMessage = (
   message: Message,
   author: IMember,
-  reaction: IReaction,
 ): IMessage => {
   return {
     id: message.id,
     author: author,
     content: message.content,
-    reaction: reaction,
-    date: message.createdAt,
     url: message.url,
+    date: message.createdAt,
   };
 };
 
@@ -118,12 +131,30 @@ export const isInteractionAllowed = (
   interaction: CommandInteraction,
   onlyAdmins: boolean = true,
 ): boolean => {
-  const guild = interaction.guildId;
-  if (!guild) return false; // Return false if not in guild
+  if (!interaction.guild) return false;
+  if (onlyAdmins) return Object.values(Admins).includes(interaction.user.id);
 
-  if (onlyAdmins) {
-    return Object.values(Admins).includes(interaction.user.id);
-  }
+  return !Object.values(Servers).includes(interaction.guild.id);
+};
 
-  return !Object.values(Servers).includes(guild);
+export const buildLeaderboardEmbed = (
+  leaderboard: ILeaderboard,
+): EmbedBuilder => {
+  const green = "#77b255";
+  const embed = new EmbedBuilder()
+    .setTitle("Yakuza Leaderboard")
+    .setColor(green)
+    .setTimestamp(leaderboard.createdAt);
+
+  leaderboard.rankings.forEach((ranking, index) => {
+    embed.addFields({
+      name: `**Rank: #${++index}**`,
+      value: `
+      **${ranking.member.username}**: ${ranking.message.content}
+      Yakuzas: ${ranking.reaction.count} — ${ranking.message.url}
+      `,
+    });
+  });
+
+  return embed;
 };

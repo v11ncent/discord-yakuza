@@ -3,7 +3,6 @@ import {
   Guild,
   TextChannel,
   Message,
-  EmbedBuilder,
   MessageFlags,
   MessageReaction,
 } from "discord.js";
@@ -15,91 +14,73 @@ import {
   transformReaction,
   transformMember,
   transformMessage,
+  buildLeaderboardEmbed,
+  postLeaderboard,
 } from "../helpers/index";
-import { IRanking } from "../../shared/types/leaderboard.interface";
+import {
+  ILeaderboard,
+  IRanking,
+} from "../../shared/types/leaderboard.interface";
 
 export const initialize = async (interaction: CommandInteraction) => {
-  if (isInteractionAllowed(interaction) && interaction.guild) {
-    // see: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-    const leaderboard = (await initializeLeaderboard(interaction.guild)).splice(
-      0,
-      10,
-    );
-
-    if (!leaderboard || leaderboard.length < 1) {
-      console.error("Leaderboard is empty.");
-      interaction.editReply(
-        "Leaderboard was not able to be initialized. Please check logs.",
-      );
-      return;
-    }
-
-    // Create a custom EmbedBuilder in `helpers` eventually
-    const embed = new EmbedBuilder()
-      .setTitle("Yakuza Leaderboard")
-      .setURL("https://discordumpire.com")
-      .setThumbnail(
-        "https://encycolorpedia.com/emojis/chart-increasing-with-yen.png",
-      )
-      .setTimestamp()
-      .setColor("#77b255");
-
-    leaderboard.forEach((ranking, index) => {
-      console.log(ranking);
-      embed.addFields({
-        name: `**Rank: #${++index}**`,
-        value: `
-        **${ranking.member.username}**: ${ranking.message.content}
-        Yakuzas: ${ranking.count} — ${ranking.message.url}
-        `,
-      });
-    });
-
-    await interaction.editReply({ embeds: [embed] });
-  } else {
+  if (!isInteractionAllowed(interaction)) {
+    // See: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
     await interaction.reply({
-      content: "You can't run this command unless you're an admin 🤭",
+      content: "You can't run this command unless you're an admin.",
       flags: MessageFlags.Ephemeral,
     });
+    return;
   }
+
+  if (!interaction.guild) {
+    console.error("Guild is null.");
+    return;
+  }
+
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  const leaderboard = await initializeLeaderboard(interaction.guild);
+
+  if (leaderboard.rankings.length === 0) {
+    console.error("Leaderboard is empty.");
+    return;
+  }
+
+  const embed = buildLeaderboardEmbed(leaderboard);
+  await interaction.editReply({ embeds: [embed] });
 };
 
 /**
  * Create leaderboard with top rated messages
  * @returns A leadboard of `Ranking`
  */
-const initializeLeaderboard = async (
-  guild: Guild,
-): Promise<IRanking[] | []> => {
-  const leaderboard: IRanking[] = [];
+const initializeLeaderboard = async (guild: Guild): Promise<ILeaderboard> => {
+  const rankings: IRanking[] = [];
   const messages = await getAllGuildMessages(guild);
-  if (!messages) return [];
 
-  messages.forEach((message) => {
-    // I'd like to filter for reaction in `getQualifyingMessages()`
-    // but I'm unable to get TypeScript to infer messages
-    // that reach this point will contain a reaction
+  messages?.forEach((message) => {
+    // Can't filter in getQualifyingMessages() without more work
     const reaction = getMessageReaction(message);
     if (!reaction) return;
 
     const mutatedReaction = transformReaction(reaction);
     const mutatedMember = transformMember(message.author);
-    const mutatedMessage = transformMessage(
-      message,
-      mutatedMember,
-      mutatedReaction,
-    );
+    const mutatedMessage = transformMessage(message, mutatedMember);
 
-    leaderboard.push({
+    rankings.push({
       member: mutatedMember,
       message: mutatedMessage,
       reaction: mutatedReaction,
-      count: mutatedReaction.count,
     });
   });
 
-  leaderboard.sort((a, b) => b.count - a.count);
+  rankings.sort((a, b) => b.reaction.count - a.reaction.count);
+  const leaderboard = {
+    rankings: rankings.slice(0, 10),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  await postLeaderboard(leaderboard); // Send to backend
   return leaderboard;
 };
 

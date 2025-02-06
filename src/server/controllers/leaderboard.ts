@@ -1,33 +1,31 @@
 import { Request, Response } from "express";
-// import { ILeaderboard } from "../../shared/types/leaderboard.interface";
+import { ILeaderboard } from "../../shared/types/leaderboard.interface";
 
 const create = async (req: Request, res: Response): Promise<void> => {
   const leaderboard = req.body;
-  console.log("Request body: " + JSON.stringify(leaderboard));
-  res.status(400).send("Hi");
 
-  // if (!leaderboard || !isLeaderboardType(leaderboard)) {
-  //   res.status(400).send("Bad leaderboard data.");
-  //   return;
-  // }
+  if (!leaderboard || !isLeaderboard(leaderboard)) {
+    res.status(400).send("Bad leaderboard data.");
+    return;
+  }
+
+  console.log(leaderboard);
+  res.status(200).send(leaderboard);
 };
 
 // Checks at runtime rather than compile time
-// const isLeaderboardType = (leaderboard: ILeaderboard): boolean => {
-//   // Can get crazy and check all the types of the rankings property
-//   if (!Array.isArray(leaderboard.rankings)) {
-//     return false;
-//   }
+// Look into zod for better runtime validation as a refactor option
+const isLeaderboard = (leaderboard: ILeaderboard): boolean => {
+  const rankings = leaderboard.rankings;
+  const createdAt = leaderboard.createdAt;
+  const updatedAt = leaderboard.updatedAt;
 
-//   if (!(leaderboard.createdAt instanceof Date)) {
-//     return false;
-//   }
+  // Can get crazy and check all the types of the rankings property
+  if (!Array.isArray(rankings)) return false;
+  if (typeof createdAt !== "string") return false;
+  if (typeof updatedAt !== "string") return false;
 
-//   if (!(leaderboard.updatedAt instanceof Date)) {
-//     return false;
-//   }
-
-//   return true;
-// };
+  return true;
+};
 
 export { create };

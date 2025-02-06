@@ -8,7 +8,6 @@ export interface IRanking {
   member: IMember;
   message: IMessage;
   reaction: IReaction;
-  count: IReaction["count"];
 }
 
 export interface IMember {
@@ -21,9 +20,8 @@ export interface IMessage {
   id: string;
   author: IMember;
   content: string;
-  reaction: IReaction; // We currently only care about one reaction
-  date: Date;
   url: string;
+  date: Date;
 }
 
 export interface IReaction {
