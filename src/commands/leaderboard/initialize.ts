@@ -23,30 +23,13 @@ import {
 } from "../../shared/types/leaderboard.interface";
 
 export const initialize = async (interaction: CommandInteraction) => {
-  if (!isInteractionAllowed(interaction)) {
-    // See: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
-    await interaction.reply({
-      content: "You can't run this command unless you're an admin.",
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
-  if (!interaction.guild) {
-    console.error("Guild is null.");
-    return;
-  }
+  if (!(await isInteractionAllowed(interaction))) return;
+  if (!interaction.guild) return;
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   const leaderboard = await initializeLeaderboard(interaction.guild);
-
-  if (leaderboard.rankings.length === 0) {
-    console.error("Leaderboard is empty.");
-    return;
-  }
-
   const embed = buildLeaderboardEmbed(leaderboard);
-  await interaction.editReply({ embeds: [embed] });
+  if (embed) await interaction.editReply({ embeds: [embed] });
 };
 
 /**

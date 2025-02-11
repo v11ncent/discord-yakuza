@@ -1,7 +1,7 @@
 export interface ILeaderboard {
   rankings: IRanking[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string; // If we get from backend, it'll be in JSON format and therefore a string
+  updatedAt: Date | string;
 }
 
 export interface IRanking {

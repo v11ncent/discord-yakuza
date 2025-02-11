@@ -1,31 +1,43 @@
 import { Request, Response } from "express";
-import { ILeaderboard } from "../../shared/types/leaderboard.interface";
+import { Leaderboard } from "../models/leaderboard.model";
 
+/**
+ * Creates a `ILeaderboard` in the database
+ * Validation checks aren't needed here as I'm using Mongoose
+ * for schema validation
+ * @param req The request
+ * @param res The response
+ * @returns
+ */
 const create = async (req: Request, res: Response): Promise<void> => {
-  const leaderboard = req.body;
+  const data = req.body;
 
-  if (!leaderboard || !isLeaderboard(leaderboard)) {
+  try {
+    // We only want one leaderboard, so find any (by {}) and replace
+    // https://mongoosejs.com/docs/tutorials/findoneandupdate.html#upsert
+    const leaderboard = await Leaderboard.findOneAndReplace({}, data, {
+      upsert: true,
+    });
+    res.status(200).send({ data: leaderboard });
+  } catch (error) {
+    console.error(`Error attempting to create leaderboard: ${error}`);
     res.status(400).send("Bad leaderboard data.");
-    return;
   }
-
-  console.log(leaderboard);
-  res.status(200).send(leaderboard);
 };
 
-// Checks at runtime rather than compile time
-// Look into zod for better runtime validation as a refactor option
-const isLeaderboard = (leaderboard: ILeaderboard): boolean => {
-  const rankings = leaderboard.rankings;
-  const createdAt = leaderboard.createdAt;
-  const updatedAt = leaderboard.updatedAt;
-
-  // Can get crazy and check all the types of the rankings property
-  if (!Array.isArray(rankings)) return false;
-  if (typeof createdAt !== "string") return false;
-  if (typeof updatedAt !== "string") return false;
-
-  return true;
+/**
+ * Fetches the leaderboard from the database
+ * @param _
+ * @param res The response
+ */
+const read = async (_: any, res: Response): Promise<void> => {
+  try {
+    const leaderboard = await Leaderboard.findOne({});
+    res.status(200).send({ data: leaderboard });
+  } catch (error) {
+    console.error(`Error attempting to fetch leadboard: ${error}`);
+    res.status(400).send({ data: {}, status: "fail", code: 400 });
+  }
 };
 
-export { create };
+export { create, read };

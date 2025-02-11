@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { create } from "../controllers/leaderboard";
+import { create, read } from "../controllers/leaderboard";
 
 const router = Router();
 router.post("/", create);
+router.get("/", read);
 
 export { router as leaderboardRouter };

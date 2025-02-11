@@ -9,6 +9,7 @@ import {
   ApplicationEmoji,
   ReactionEmoji,
   EmbedBuilder,
+  MessageFlags,
 } from "discord.js";
 import { Admins } from "../../shared/enums/admins";
 import { Servers } from "../../shared/enums/servers";
@@ -19,7 +20,35 @@ import {
   IEmoji,
   ILeaderboard,
 } from "../../shared/types/leaderboard.interface";
+import { IApiResponse } from "../../shared/types/api.interface";
 
+/**
+ * Gets stored leaderboard
+ * Is not configured to handle multiple guilds
+ * @returns A `ILeaderboard`
+ */
+export const getLeaderboard = async (): Promise<ILeaderboard | null> => {
+  const endpoint = "http://localhost:3000/leaderboard";
+
+  try {
+    const response = await fetch(endpoint);
+    if (!response.ok) {
+      console.log(`Error fetching leaderboard from database: ${response}`);
+      return null;
+    }
+
+    const json: IApiResponse = await response.json();
+    return json.data;
+  } catch (error) {
+    console.log(`Error fetching leaderboard from database: ${error}`);
+    return null;
+  }
+};
+
+/**
+ * Creates a leaderboard in the backend
+ * @param leaderboard A `ILeaderboard`
+ */
 export const postLeaderboard = async (
   leaderboard: ILeaderboard,
 ): Promise<void> => {
@@ -28,9 +57,7 @@ export const postLeaderboard = async (
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(leaderboard),
-  })
-    .then(console.log)
-    .catch(console.log);
+  });
 };
 
 /**
@@ -123,30 +150,57 @@ export const isTextMessage = (message: Message): boolean => {
 
 /**
  * Checks if member is authorized to call interaction
+ * See: https://discordjs.guide/slash-commands/response-methods.html#editing-responses
  * @param interaction The `CommandInteraction` to call
  * @param onlyAdmins Authorize only admins to call the interaction
  * @returns A `boolean`
  */
-export const isInteractionAllowed = (
+export const isInteractionAllowed = async (
   interaction: CommandInteraction,
   onlyAdmins: boolean = true,
-): boolean => {
-  if (!interaction.guild) return false;
-  if (onlyAdmins) return Object.values(Admins).includes(interaction.user.id);
+): Promise<boolean> => {
+  const guild = interaction.guild;
+  const isValidAdmin = Object.values(Admins).includes(interaction.user.id);
+  const isValidServer = Object.values(Servers).includes(guild!.id);
 
-  return !Object.values(Servers).includes(interaction.guild.id);
+  if (onlyAdmins && !isValidAdmin) {
+    await interaction.reply({
+      content: "You can't run this command unless you're an admin.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return false;
+  }
+
+  if (!isValidServer) {
+    await interaction.reply({
+      content: "You can't run this command inside this server.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return false;
+  }
+
+  return true;
 };
 
 export const buildLeaderboardEmbed = (
   leaderboard: ILeaderboard,
-): EmbedBuilder => {
+): EmbedBuilder | null => {
+  const rankings = leaderboard.rankings;
+  if (!rankings || rankings.length === 0) {
+    console.error("Leaderboard rankings are empty.");
+    return null;
+  }
+
   const green = "#77b255";
   const embed = new EmbedBuilder()
     .setTitle("Yakuza Leaderboard")
     .setColor(green)
-    .setTimestamp(leaderboard.createdAt);
+    // .createdAt is a string since it's JSON so we need to parse it
+    // we aren't using the Date constructor because it's apparently
+    // inconsistent on different browsers
+    .setTimestamp(Date.parse(leaderboard.createdAt.toString()));
 
-  leaderboard.rankings.forEach((ranking, index) => {
+  rankings.forEach((ranking, index) => {
     embed.addFields({
       name: `**Rank: #${++index}**`,
       value: `

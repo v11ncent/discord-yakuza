@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { initialize } from "./initialize";
+import { get } from "./get";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,6 +12,9 @@ module.exports = {
         .setDescription(
           "Initializes leaderboard by crawling all guild messages and storing inside database",
         ),
+    )
+    .addSubcommand((subcommand) =>
+      subcommand.setName("get").setDescription("Gets saved leaderboard"),
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
@@ -19,6 +23,9 @@ module.exports = {
     switch (subcommand) {
       case "initialize":
         initialize(interaction);
+        break;
+      case "get":
+        get(interaction);
         break;
       default:
         break;
