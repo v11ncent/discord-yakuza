@@ -5,7 +5,7 @@
   "scripts": {
     "client": "tsc && node -r dotenv/config ./build/main.js",
     "server": "tsc && node ./build/server/index.js",
-    "start": "tsc && node -r dotenv/config ./build/main.js && node ./build/server/index.js",
+    "bot": "tsc && concurrently \"node -r dotenv/config ./build/main.js\" \"node ./build/server/index.js\"",
     "deploy": "node -r dotenv/config ./build/deploy.js",
     "watch": "tsc --watch",
     "build": "tsc"
@@ -26,6 +26,7 @@
     "@types/express": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "concurrently": "^9.1.2",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-airbnb-typescript": "^18.0.0",
