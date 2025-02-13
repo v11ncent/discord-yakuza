@@ -1,13 +1,13 @@
 export interface ILeaderboard {
   rankings: IRanking[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string; // If we get from backend, it'll be in JSON format and therefore a string
+  updatedAt: Date | string;
 }
 
 export interface IRanking {
   member: IMember;
   message: IMessage;
-  count: IReaction["count"];
+  reaction: IReaction;
 }
 
 export interface IMember {
@@ -20,13 +20,16 @@ export interface IMessage {
   id: string;
   author: IMember;
   content: string;
-  reaction: IReaction; // We currently only care about one reaction
-  date: Date;
   url: string;
+  date: Date;
 }
 
 export interface IReaction {
-  id: string | null;
-  name: string | null;
+  emoji: IEmoji;
   count: number;
+}
+
+export interface IEmoji {
+  id?: string | null;
+  name: string | null;
 }
