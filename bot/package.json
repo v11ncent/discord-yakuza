@@ -19,12 +19,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mongodb": "^6.9.0",
-<<<<<<< HEAD:package.json
     "mongoose": "^8.9.6"
-=======
-    "mongoose": "^8.9.6",
-    "nodemon": "^3.1.9"
->>>>>>> 9c8c206f1c5e679c5892901d58ff2f20b4ffe15b:bot/package.json
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",
