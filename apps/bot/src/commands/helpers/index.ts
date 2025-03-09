@@ -52,7 +52,7 @@ export const getLeaderboard = async (
 
 /**
  * Creates a leaderboard in the backend
- * @param leaderboard A `ILeaderboard`
+ * @param leaderboard An `ILeaderboard`
  */
 export const postLeaderboard = async (
   leaderboard: ILeaderboard
@@ -73,7 +73,7 @@ export const postLeaderboard = async (
 /**
  * Transforms a `User` into an `IMember`
  * @param message A `Message`
- * @returns
+ * @returns An `IMember`
  */
 export const transformMember = (user: User): IMember => {
   return {
@@ -151,8 +151,8 @@ export const isBotMessage = (message: Message): boolean => {
 };
 
 /**
- * Determines if `Message` contains text.
- * @param message
+ * Determines if `Message` contains text
+ * @param message `Message`
  * @returns `boolean`
  */
 export const isTextMessage = (message: Message): boolean => {

@@ -9,7 +9,6 @@ Very in the weeds. High level overview of what we need to do:
 1. Get all messages that pass our qualifiers
 2. Transform message data into format that's acceptable to backend model
 3. Send model data to database
-
 4. getAllGuildMessages() returns all guild messages
 
 ## Message fetching
@@ -36,17 +35,3 @@ Basically Guilds, Channels, Roles and PermissionOverwrites are all cached on rea
 # Log
 
 Created monorepo with Turborepo to abstract web app, discord bot, and server to their own 'apps'
-
-# Is this a frontend or backend position?
-
-# What type of projects would I be working on? How many projects do you guys have currently?
-
-# Do you guys use source control?
-
-# Documentation?
-
-# Team structure e.g seniors / leads in team?
-
-# If I don't know a question be honest and try to pull on previous experiences
-
-I may not have done X, but I have done Y...
