@@ -1,0 +1,11 @@
+{
+  "name": "@yakuza/types",
+  "description": "Shared types for discord-yakuza",
+  "exports": {
+    "./api": "./api.interace.ts",
+    "./leaderboard": "./leaderboard.interface.ts"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "ISC"
+}

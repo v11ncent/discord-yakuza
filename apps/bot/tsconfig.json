@@ -1,0 +1,9 @@
+{
+  "extends": "@yakuza/typescript-config/base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "./build"
+  },
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,18 @@
+{
+  "packageManager": "npm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "bot": "turbo run dev --filter=@yakuza/bot",
+    "server": "turbo run dev --filter=@yakuza/server",
+    "yakuza": "turbo run --filter=@yakuza/bot",
+    "start": "turbo run start",
+    "build": "turbo run build",
+    "dev": "turbo run dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.2"
+  }
+}
