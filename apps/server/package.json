@@ -1,0 +1,23 @@
+{
+  "name": "@yakuza/server",
+  "version": "1.0.0",
+  "description": "Express server for discord-yakuza",
+  "main": "index.js",
+  "scripts": {
+    "server": "tsc && node ./build/index.js",
+    "watch": "tsc --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mongoose": "^8.10.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@yakuza/types": "file:../../packages/types",
+    "@yakuza/typescript-config": "file:../../packages/typescript-config",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "@yakuza/typescript-config",
+  "description": "Custom TypeScript config with for discord-yakuza",
+  "license": "ISC"
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@yakuza/bot",
+  "version": "1.0.0",
+  "description": "Discord bot for discord-yakuza",
+  "scripts": {
+    "bot": "tsc && node -r dotenv/config ./build/main.js",
+    "deploy": "node -r dotenv/config ./build/deploy.js",
+    "watch": "tsc --watch",
+    "build": "tsc",
+    "check-types": "tsc --noEmit"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@yakuza/types": "file:../../packages/types",
+    "@yakuza/typescript-config": "file:../../packages/typescript-config",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "typescript": "^5.6.3"
+  }
+}
