@@ -12,10 +12,7 @@ export const get = async (interaction: CommandInteraction) => {
   await interaction.deferReply();
 
   const leaderboard = await getLeaderboard();
-  if (!leaderboard) {
-    console.error("Leaderboard is empty.");
-    return;
-  }
+  if (!leaderboard) return;
 
   const embed = buildLeaderboardEmbed(leaderboard);
   if (embed) await interaction.editReply({ embeds: [embed] });

@@ -1,3 +1,7 @@
+## deferReply() times out after 15 minutes
+
+If we run /leaderboard initialize, it can take 30+ minutes so we'll get an Invalid Webhook Token error at the end
+
 ## Streamlining message fetching and sending to backend
 
 Very in the weeds. High level overview of what we need to do:

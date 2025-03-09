@@ -4,11 +4,11 @@
   "description": "Web application for discord-yakuza",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
     "build": "next build",
+    "check-types": "tsc --noEmit",
+    "dev": "next dev --turbopack",
     "start": "next start",
-    "lint": "next lint",
-    "check-types": "tsc --noEmit"
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "15.1.7",

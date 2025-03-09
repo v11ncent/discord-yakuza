@@ -30,18 +30,18 @@ import { IApiResponse } from "@yakuza/types/api.interface";
 export const getLeaderboard = async (
   count = 5
 ): Promise<ILeaderboard | null> => {
-  const endpoint = "http://localhost:3000/leaderboard";
+  const endpoint = `${process.env["API_URL"]}/leaderboard`;
 
   try {
     const response = await fetch(endpoint);
     if (!response.ok) {
-      console.log(`Error fetching leaderboard from database: ${response}`);
+      console.log("Error fetching leaderboard from database.");
       return null;
     }
 
     const json: IApiResponse = await response.json();
     let data = json.data;
-    data = { ...data, rankings: data.rankings.slice(0, 5) }; // Get only 5 rankings for Discord embed
+    data = { ...data, rankings: data.rankings.slice(0, 5) }; // Grab 5 rankings for Discord embed
 
     return data;
   } catch (error) {
@@ -57,12 +57,17 @@ export const getLeaderboard = async (
 export const postLeaderboard = async (
   leaderboard: ILeaderboard
 ): Promise<void> => {
-  const endpoint = "http://localhost:3000/leaderboard";
-  await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(leaderboard),
-  });
+  const endpoint = `${process.env["API_URL"]}/leaderboard`;
+
+  try {
+    await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(leaderboard),
+    });
+  } catch (error) {
+    console.error("Error creating leaderboard in database.");
+  }
 };
 
 /**

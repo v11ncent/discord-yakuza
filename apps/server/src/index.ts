@@ -6,7 +6,7 @@ import { environmentVariables } from "./helpers";
 
 const { connection } = environmentVariables();
 const app = express();
-const port = 3000;
+const port = 8000;
 
 app.use(cors());
 // Parses and unzips request body so we can use

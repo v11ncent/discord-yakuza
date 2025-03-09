@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "Express server for discord-yakuza",
   "main": "index.js",
-  "scripts": {
-    "server": "tsc && node ./build/index.js",
-    "watch": "tsc --watch",
-    "check-types": "tsc --noEmit"
-  },
   "license": "ISC",
+  "scripts": {
+    "build": "tsc",
+    "start": "node ./build/index.js",
+    "check-types": "tsc --noEmit",
+    "watch": "tsc --watch"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",

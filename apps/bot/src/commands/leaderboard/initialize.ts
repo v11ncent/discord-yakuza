@@ -113,7 +113,9 @@ const getAllGuildMessages = async (guild: Guild) => {
 
   if (channels) {
     // Using `Promise.all()` here so we wait for all promises to resolve before returning
-    const messages = await Promise.all(channels.map(getAllChannelMessages));
+    const messages = await Promise.all(
+      channels.map((channel) => getAllChannelMessages(channel))
+    );
     return messages.flat();
   }
 
@@ -125,18 +127,23 @@ const getAllGuildMessages = async (guild: Guild) => {
  * Get all messages from a `TextChannel`
  * https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
  * @param channel A `TextChannel`
+ * @param numberOfMessages Amount of messages to fetch from each channel
  * @returns An array of `Message`
  */
 const getAllChannelMessages = async (
-  channel: TextChannel
+  channel: TextChannel,
+  numberOfMessages = 100000
 ): Promise<Message[]> => {
   let messages = await getQualifyingMessages(channel);
   let pivot = messages.pop()?.id;
 
-  while (pivot !== undefined && messages.length < 100) {
+  while (pivot !== undefined && messages.length < numberOfMessages) {
     let batch = await getQualifyingMessages(channel, pivot);
     messages = [...messages, ...batch];
     pivot = batch.pop()?.id;
+    console.log(
+      `Fetching messages (${channel.name}): ${messages.length} /  ${numberOfMessages}`
+    );
   }
 
   return messages;

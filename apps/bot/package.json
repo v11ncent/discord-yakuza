@@ -2,14 +2,14 @@
   "name": "@yakuza/bot",
   "version": "1.0.0",
   "description": "Discord bot for discord-yakuza",
-  "scripts": {
-    "bot": "tsc && node -r dotenv/config ./build/main.js",
-    "deploy": "node -r dotenv/config ./build/deploy.js",
-    "watch": "tsc --watch",
-    "build": "tsc",
-    "check-types": "tsc --noEmit"
-  },
   "license": "ISC",
+  "scripts": {
+    "build": "tsc",
+    "start": "node -r dotenv/config ./build/main.js",
+    "check-types": "tsc --noEmit",
+    "deploy": "node -r dotenv/config ./build/deploy.js",
+    "watch": "tsc --watch"
+  },
   "dependencies": {
     "@types/cors": "^2.8.17",
     "discord.js": "^14.18.0",
