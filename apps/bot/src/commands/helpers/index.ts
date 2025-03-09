@@ -41,7 +41,7 @@ export const getLeaderboard = async (
 
     const json: IApiResponse = await response.json();
     let data = json.data;
-    data = { ...data, rankings: data.rankings.slice(0, 5) }; // Grab 5 rankings for Discord embed
+    data = { ...data, rankings: data.rankings.slice(0, count) };
 
     return data;
   } catch (error) {
